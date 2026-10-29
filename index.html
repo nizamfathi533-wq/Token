@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Shifa Al-Khobar Medical Center - Token Management System</title>
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
+  <style>
+    :root{--bg-dark:#0f172a;--panel-dark:#1e293b;--card-dark:#334155;--accent:#38bdf8;--text-main:#f8fafc;--text-sub:#94a3b8;--status-waiting:#ef4444;--status-inside:#22c55e;--status-finished:#64748b}
+    *{box-sizing:border-box;margin:0;padding:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+    body{background:var(--bg-dark);color:var(--text-main);min-height:100vh;display:flex;flex-direction:column}
+    header{background:#020617;padding:12px 24px;display:flex;justify-content:space-between;align-items:center;gap:16px;border-bottom:2px solid #1e293b;flex-wrap:wrap}
+    .brand{display:flex;flex-direction:column;gap:2px}.brand-main{font-size:1.25rem;font-weight:800;color:#38bdf8;letter-spacing:.5px}.brand-sub{font-size:.85rem;font-weight:700;color:#34d399;direction:rtl}
+    .nav-tabs{display:flex;gap:8px;flex-wrap:wrap}.tab-btn{background:var(--panel-dark);color:var(--text-sub);border:1px solid #334155;padding:10px 18px;border-radius:8px;cursor:pointer;font-weight:600}.tab-btn:hover{color:var(--text-main);background:var(--card-dark)}.tab-btn.active{background:var(--accent);color:#020617;border-color:var(--accent)}
+    .main-content{flex:1;padding:24px;max-width:1600px;width:100%;margin:0 auto}.view-panel{display:none}.view-panel.active{display:block}
+    .reception-grid{display:grid;grid-template-columns:420px 1fr;gap:24px}.card{background:var(--panel-dark);border-radius:12px;padding:24px;border:1px solid #334155}
+    .card-title{font-size:1.2rem;font-weight:700;margin-bottom:20px;color:var(--accent);display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+    .form-group{margin-bottom:16px}.form-group label{display:block;font-size:.85rem;color:var(--text-sub);margin-bottom:6px;font-weight:600}.form-control{width:100%;padding:12px;background:#090d16;border:1px solid #334155;border-radius:6px;color:white;font-size:1rem}.form-control:focus{outline:none;border-color:var(--accent)}
+    .search-bar-row{display:flex;gap:10px;margin-bottom:16px}.procedure-checkboxes{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:8px}.checkbox-tile{background:var(--card-dark);padding:12px;border-radius:6px;display:flex;align-items:center;gap:10px;cursor:pointer;user-select:none;font-size:.95rem;border:1px solid transparent}.checkbox-tile:hover{border-color:var(--accent)}.checkbox-tile input{accent-color:var(--accent);width:18px;height:18px}
+    .btn-primary{width:100%;background:#0284c7;color:white;border:none;padding:14px;border-radius:8px;font-weight:700;font-size:1.05rem;cursor:pointer;margin-top:10px}.btn-primary:hover{background:#0369a1}
+    .table-container{overflow:auto;max-height:520px}table{width:100%;border-collapse:collapse;text-align:left}th,td{padding:12px 16px;border-bottom:1px solid #334155}th{position:sticky;top:0;background:#0f172a;color:var(--text-sub);font-size:.85rem;text-transform:uppercase;z-index:2}
+    .matrix-grid{display:grid;grid-template-columns:repeat(4,minmax(220px,1fr));gap:16px}.matrix-section{background:var(--panel-dark);border-radius:12px;border:1px solid #334155;overflow:hidden;max-height:80vh;overflow-y:auto}
+    .section-header{background:#090d16;padding:14px 18px;font-size:1.1rem;font-weight:700;color:var(--accent);border-bottom:1px solid #334155;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:3}
+    .bed-card{background:var(--card-dark);margin:12px;border-radius:8px;padding:14px;border:2px solid #475569}.bed-card.state-waiting{border-color:var(--status-waiting)}.bed-card.state-inside{border-color:var(--status-inside);background:#064e3b}.bed-card.state-finished{border-color:var(--status-finished);opacity:.7}
+    .bed-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}.bed-num{font-weight:800;font-size:1.1rem;color:#cbd5e1}.patient-token-badge{font-size:1.4rem;font-weight:900;color:white}.patient-name-info{font-size:.9rem;color:var(--text-sub);margin-bottom:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .action-btns{display:grid;grid-template-columns:1fr 1fr;gap:6px}.btn-act{padding:8px;border:none;border-radius:6px;font-size:.8rem;font-weight:700;cursor:pointer;color:white}.btn-act:hover{opacity:.85}.btn-call{background:#eab308;color:black;grid-column:span 2;margin-bottom:4px}.btn-inside{background:var(--status-inside)}.btn-finish{background:var(--status-finished)}
+    .tv-container{background:#fff;min-height:calc(100vh - 80px);border-radius:12px;padding:20px;display:flex;flex-direction:column}.tv-columns-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px;flex:1}.tv-column{background:#f1f5f9;border:2px solid #cbd5e1;border-radius:10px;padding:14px;display:flex;flex-direction:column;gap:12px;max-height:calc(100vh - 120px);overflow-y:auto}
+    .tv-col-title{font-size:1.2rem;font-weight:900;color:#0f172a;text-transform:uppercase;text-align:center;padding-bottom:10px;border-bottom:3px solid #cbd5e1;letter-spacing:1px;position:sticky;top:0;background:#f1f5f9;z-index:2}.tv-token-box{border-radius:8px;border:4px solid #22c55e;padding:20px;text-align:center;background:#dcfce7;box-shadow:0 0 15px rgba(34,197,94,.3)}.tv-token-val{font-size:4rem;font-weight:900;color:#000;line-height:1.1}
+    .stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:24px}.stat-card{background:#090d16;border:1px solid #334155;padding:20px;border-radius:10px;text-align:center}.stat-num{font-size:2.2rem;font-weight:900;color:var(--accent);margin-top:6px}
+    .connection-status{font-size:.8rem;font-weight:700;padding:6px 10px;border-radius:6px;background:#334155;color:#f8fafc}.connection-status.online{background:#064e3b;color:#bbf7d0}.connection-status.offline{background:#7f1d1d;color:#fecaca}
+    @media(max-width:1100px){.reception-grid{grid-template-columns:1fr}.matrix-grid{grid-template-columns:repeat(2,minmax(220px,1fr))}.tv-columns-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+    @media(max-width:650px){header{padding:12px}.main-content{padding:12px}.card{padding:16px}.matrix-grid,.tv-columns-grid,.stats-grid{grid-template-columns:1fr}.nav-tabs{width:100%}.tab-btn{flex:1;padding:10px 8px;font-size:.8rem}.tv-token-val{font-size:3rem}th,td{padding:9px 10px;font-size:.85rem}}
+  </style>
+</head>
+<body>
+<header>
+  <div class="brand"><div class="brand-main">Shifa Al-Khobar Medical Center</div><div class="brand-sub">مجمع شفاء الخبر الطبي</div></div>
+  <span id="connection-status" class="connection-status">Connecting to cloud…</span>
+  <div class="nav-tabs">
+    <button class="tab-btn active" onclick="switchTab('reception')">1. Reception</button>
+    <button class="tab-btn" onclick="switchTab('inside')">2. Inside ER Matrix</button>
+    <button class="tab-btn" onclick="switchTab('outside')">3. Outside TV Display</button>
+    <button class="tab-btn" onclick="switchTab('reports')">4. Reports & History</button>
+  </div>
+</header>
+<main class="main-content">
+  <div id="setup-warning" class="card" style="display:none;margin-bottom:20px;border-color:#f59e0b">
+    <div class="card-title">Firebase setup required</div>
+    <p>Open <code>index.html</code> and replace the placeholder values in <code>firebaseConfig</code> with your Firebase project's web-app configuration. Enable Realtime Database and configure database security rules before using real patient information.</p>
+  </div>
+  <section id="view-reception" class="view-panel active">
+    <div class="reception-grid">
+      <div class="card">
+        <div class="card-title"><span>New Patient Entry</span><span style="font-size:.8rem;color:var(--text-sub)" id="auto-token-preview">Next: B1</span></div>
+        <form id="patient-form" onsubmit="registerPatient(event)">
+          <div class="form-group"><label for="p-scan">Scan File / ID Barcode</label><input type="text" id="p-scan" class="form-control" placeholder="Scan barcode or type file no..." autofocus oninput="handleBarcodeScan(this.value)"></div>
+          <div class="form-group"><label for="p-file">File / ID Number</label><input type="text" id="p-file" class="form-control" placeholder="e.g. B81059" required></div>
+          <div class="form-group"><label for="p-name">Patient Name</label><input type="text" id="p-name" class="form-control" placeholder="Type patient name..." required></div>
+          <div class="form-group"><label>Select Required Procedures (first selected determines token prefix)</label><div class="procedure-checkboxes">
+            <label class="checkbox-tile"><input type="checkbox" name="proc" value="Bed IV" data-prefix="B"> Bed IV (1-10)</label>
+            <label class="checkbox-tile"><input type="checkbox" name="proc" value="Injection" data-prefix="I"> Injection (11-20)</label>
+            <label class="checkbox-tile"><input type="checkbox" name="proc" value="ECG" data-prefix="E"> ECG (21-30)</label>
+            <label class="checkbox-tile"><input type="checkbox" name="proc" value="Dressing" data-prefix="D"> Dressing (31-40)</label>
+          </div></div>
+          <button type="submit" class="btn-primary">Register & Print Thermal Slips</button>
+        </form>
+      </div>
+      <div class="card"><div class="card-title"><span>Today's Patient Queue</span><span style="font-size:.85rem;color:var(--accent)" id="queue-total-count">0 Total Today</span></div>
+        <div class="search-bar-row"><input type="text" id="queue-search" class="form-control" placeholder="🔍 Search Token, Name, or File No..." oninput="renderReceptionTable()"></div>
+        <div class="table-container"><table><thead><tr><th>Time</th><th>Token</th><th>Name / File</th><th>Procedures</th></tr></thead><tbody id="reception-table-body"></tbody></table></div>
+      </div>
+    </div>
+  </section>
+  <section id="view-inside" class="view-panel"><div class="matrix-grid">
+    <div class="matrix-section"><div class="section-header"><span>BED IV</span><span>1-10</span></div><div id="beds-group-1"></div></div>
+    <div class="matrix-section"><div class="section-header"><span>INJECTION</span><span>11-20</span></div><div id="beds-group-2"></div></div>
+    <div class="matrix-section"><div class="section-header"><span>ECG</span><span>21-30</span></div><div id="beds-group-3"></div></div>
+    <div class="matrix-section"><div class="section-header"><span>DRESSING</span><span>31-40</span></div><div id="beds-group-4"></div></div>
+  </div></section>
+  <section id="view-outside" class="view-panel"><div class="tv-container"><div class="tv-columns-grid" id="tv-columns-grid"></div></div></section>
+  <section id="view-reports" class="view-panel"><div class="card">
+    <div class="card-title"><span>Procedure Counts & Historical Audit Log</span><div><label for="audit-date-picker" style="font-size:.85rem;color:var(--text-sub);margin-right:8px">Select Date:</label><input type="date" id="audit-date-picker" class="form-control" style="display:inline-block;width:auto" onchange="renderReports()"></div></div>
+    <div class="stats-grid">
+      <div class="stat-card"><div style="color:var(--text-sub);font-weight:700">Total Patients</div><div class="stat-num" id="stat-total">0</div></div>
+      <div class="stat-card"><div style="color:var(--text-sub);font-weight:700">Injection Total</div><div class="stat-num" id="stat-inj">0</div></div>
+      <div class="stat-card"><div style="color:var(--text-sub);font-weight:700">Dressing Total</div><div class="stat-num" id="stat-dress">0</div></div>
+      <div class="stat-card"><div style="color:var(--text-sub);font-weight:700">ECG Total</div><div class="stat-num" id="stat-ecg">0</div></div>
+    </div>
+    <div class="table-container"><table><thead><tr><th>Time</th><th>Token</th><th>Patient Name / File</th><th>Procedures Required</th></tr></thead><tbody id="reports-table-body"></tbody></table></div>
+  </div></section>
+</main>
+<script>
+  // IMPORTANT: Replace every placeholder below with the config from Firebase Console.
+  const firebaseConfig = {
+    apiKey: "YOUR_FIREBASE_API_KEY",
+    authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+    databaseURL: "https://YOUR_PROJECT_ID-default-rtdb.firebaseio.com",
+    projectId: "YOUR_PROJECT_ID",
+    storageBucket: "YOUR_PROJECT_ID.appspot.com",
+    messagingSenderId: "YOUR_SENDER_ID",
+    appId: "YOUR_APP_ID"
+  };
+  const firebaseConfigured = !Object.values(firebaseConfig).some(v => String(v).includes("YOUR_"));
+  const STATIONS = [
+    ...Array.from({length:10},(_,i)=>({id:i+1,type:'Bed IV',label:`Bed ${i+1}`})),
+    ...Array.from({length:10},(_,i)=>({id:i+11,type:'Injection',label:`Station ${i+11}`})),
+    ...Array.from({length:10},(_,i)=>({id:i+21,type:'ECG',label:`ECG ${i+21}`})),
+    ...Array.from({length:10},(_,i)=>({id:i+31,type:'Dressing',label:`Dressing ${i+31}`}))
+  ];
+  let state = {lastDate:new Date().toDateString(),counters:{B:0,I:0,E:0,D:0},patients:[],history:{},stationsState:{}};
+  let db = null, stateRef = null, applyingCloudState = false;
+  const statusEl = document.getElementById('connection-status');
+  function setConnectionStatus(text, kind=''){statusEl.textContent=text;statusEl.className='connection-status '+kind;}
+  function localDateKey(date=new Date()){const y=date.getFullYear(),m=String(date.getMonth()+1).padStart(2,'0'),d=String(date.getDate()).padStart(2,'0');return `${y}-${m}-${d}`;}
+  function escapeHtml(value){return String(value??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));}
+  function initStationsState(){if(!state.stationsState)state.stationsState={};STATIONS.forEach(st=>{if(!state.stationsState[st.id])state.stationsState[st.id]={token:'---',name:'',status:'finished'};});}
+  function saveState(){if(!stateRef){setConnectionStatus('Firebase not configured','offline');return;}setConnectionStatus('Saving…');stateRef.set(state).then(()=>setConnectionStatus('Cloud connected','online')).catch(err=>{console.error(err);setConnectionStatus('Cloud save failed','offline');alert('Could not save to Firebase. Check internet connection and database rules.');});}
+  function initializeCloud(){
+    if(!firebaseConfigured){document.getElementById('setup-warning').style.display='block';setConnectionStatus('Firebase setup required','offline');initStationsState();renderAll();return;}
+    try{
+      firebase.initializeApp(firebaseConfig);db=firebase.database();stateRef=db.ref('shifa_clinic_state');
+      db.ref('.info/connected').on('value',snap=>setConnectionStatus(snap.val()?'Cloud connected':'Offline',''+(snap.val()?'online':'offline')));
+      stateRef.on('value',snapshot=>{
+        const serverState=snapshot.val();
+        if(serverState){applyingCloudState=true;state={...state,...serverState};state.counters=state.counters||{B:0,I:0,E:0,D:0};state.patients=Array.isArray(state.patients)?state.patients:Object.values(state.patients||{});state.history=state.history||{};initStationsState();checkDailyReset(false);renderAll();applyingCloudState=false;}
+        else{initStationsState();saveState();}
+      },err=>{console.error(err);setConnectionStatus('Firebase access denied','offline');alert('Firebase database could not be read. Check your Firebase Realtime Database rules and configuration.');});
+    }catch(err){console.error(err);setConnectionStatus('Firebase initialization error','offline');}
+  }
+  window.addEventListener('DOMContentLoaded',()=>{const picker=document.getElementById('audit-date-picker');if(picker)picker.value=localDateKey();initStationsState();initializeCloud();renderAll();});
+  function checkDailyReset(persist=true){const today=new Date().toDateString();if(state.lastDate!==today){const oldDate=new Date(state.lastDate);if(state.patients?.length&&!Number.isNaN(oldDate.getTime()))state.history[localDateKey(oldDate)]=[...state.patients];state.lastDate=today;state.counters={B:0,I:0,E:0,D:0};state.patients=[];state.stationsState={};initStationsState();if(persist&&!applyingCloudState)saveState();}}
+  function switchTab(tabName){document.querySelectorAll('.tab-btn').forEach(btn=>btn.classList.remove('active'));document.querySelectorAll('.view-panel').forEach(panel=>panel.classList.remove('active'));const index={reception:0,inside:1,outside:2,reports:3}[tabName];if(index===undefined)return;document.querySelectorAll('.tab-btn')[index].classList.add('active');document.getElementById('view-'+tabName).classList.add('active');if(tabName==='reports')renderReports();}
+  function handleBarcodeScan(val){if(val&&val.trim()){const v=val.trim().toUpperCase();document.getElementById('p-file').value=v;}}
+  function registerPatient(e){
+    e.preventDefault();checkDailyReset();const name=document.getElementById('p-name').value.trim().toUpperCase(),file=document.getElementById('p-file').value.trim().toUpperCase();
+    const checkedBoxes=Array.from(document.querySelectorAll('input[name="proc"]:checked'));if(!checkedBoxes.length){alert('Please select at least one procedure!');return;}if(!firebaseConfigured){alert('Configure Firebase first. Patient records will not be saved to the cloud until setup is complete.');return;}
+    const prefix=checkedBoxes[0].dataset.prefix;state.counters=state.counters||{B:0,I:0,E:0,D:0};state.counters[prefix]=(state.counters[prefix]||0)+1;const token=`${prefix}${state.counters[prefix]}`;
+    const patient={token,name,file,procedures:checkedBoxes.map(c=>c.value),time:new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}),status:'waiting'};
+    state.patients=state.patients||[];state.patients.unshift(patient);const todayKey=localDateKey();state.history=state.history||{};state.history[todayKey]=[...state.patients];assignPatientToStations(patient);renderAll();
+    saveState();triggerThermalPrint(patient);document.getElementById('patient-form').reset();document.getElementById('p-scan').focus();
+  }
+  function assignPatientToStations(patient){patient.procedures.forEach(proc=>{const stations=STATIONS.filter(s=>s.type===proc);const available=stations.find(st=>state.stationsState[st.id]?.status==='finished');if(available)state.stationsState[available.id]={token:patient.token,name:patient.name,status:'waiting'};else if(stations.length)alert(`All ${proc} stations are occupied. ${patient.token} was not assigned to a free ${proc} station.`);});}
+  function updateStationStatus(stationId,status){const current=state.stationsState?.[stationId];if(!current||current.token==='---')return;if(status==='finished')state.stationsState[stationId]={token:'---',name:'',status:'finished'};else state.stationsState[stationId].status=status;renderAll();saveState();}
+  function callToken(stationId){const station=state.stationsState?.[stationId];if(station&&station.token!=='---'){const st=STATIONS.find(s=>s.id===stationId);speakAnnouncement(`Token number ${station.token}, please proceed to ${st?st.label:'Station'}`);}}
+  function speakAnnouncement(text){if('speechSynthesis'in window){window.speechSynthesis.cancel();const utterance=new SpeechSynthesisUtterance(text);utterance.rate=.9;utterance.pitch=1;window.speechSynthesis.speak(utterance);}}
+  function renderAll(){const total=document.getElementById('queue-total-count');if(total)total.textContent=`${state.patients?.length||0} Total Today`;renderReceptionTable();renderInsideMatrix();renderOutsideTV();renderReports();updateTokenPreview();}
+  function updateTokenPreview(){const el=document.getElementById('auto-token-preview');if(!el)return;const selected=document.querySelector('input[name="proc"]:checked');const prefix=selected?.dataset.prefix||'B';el.textContent=`Next: ${prefix}${(state.counters?.[prefix]||0)+1}`;document.querySelectorAll('input[name="proc"]').forEach(c=>c.onchange=updateTokenPreview);}
+  function renderReceptionTable(){const tbody=document.getElementById('reception-table-body');if(!tbody)return;const q=(document.getElementById('queue-search')?.value||'').trim().toLowerCase();const patients=state.patients||[];const filtered=patients.filter(p=>[p.token,p.name,p.file].some(v=>String(v||'').toLowerCase().includes(q)));if(!filtered.length){tbody.innerHTML='<tr><td colspan="4" style="text-align:center;color:var(--text-sub);padding:20px">No patients found</td></tr>';return;}tbody.innerHTML=filtered.map(p=>`<tr><td>${escapeHtml(p.time)}</td><td style="font-weight:800;color:var(--accent)">${escapeHtml(p.token)}</td><td>${escapeHtml(p.name)}<br><small style="color:var(--text-sub)">${escapeHtml(p.file)}</small></td><td>${(p.procedures||[]).map(escapeHtml).join(', ')}</td></tr>`).join('');}
+  function renderInsideMatrix(){const groups={'Bed IV':document.getElementById('beds-group-1'),Injection:document.getElementById('beds-group-2'),ECG:document.getElementById('beds-group-3'),Dressing:document.getElementById('beds-group-4')};Object.values(groups).forEach(el=>{if(el)el.innerHTML='';});STATIONS.forEach(st=>{const d=state.stationsState?.[st.id]||{token:'---',name:'',status:'finished'},container=groups[st.type];if(container)container.innerHTML+=`<div class="bed-card state-${d.status}"><div class="bed-header"><span class="bed-num">${st.label}</span><span class="patient-token-badge">${escapeHtml(d.token)}</span></div><div class="patient-name-info">${escapeHtml(d.name||'Empty')}</div><div class="action-btns"><button class="btn-act btn-call" onclick="callToken(${st.id})">📢 Call</button><button class="btn-act btn-inside" onclick="updateStationStatus(${st.id},'inside')">Green (In)</button><button class="btn-act btn-finish" onclick="updateStationStatus(${st.id},'finished')">Grey (Done)</button></div></div>`;});}
+  function renderOutsideTV(){const container=document.getElementById('tv-columns-grid');if(!container)return;const categories=[{title:'Bed',type:'Bed IV'},{title:'Injection',type:'Injection'},{title:'ECG',type:'ECG'},{title:'Dressing',type:'Dressing'}];container.innerHTML=categories.map(cat=>{const items=STATIONS.filter(s=>s.type===cat.type).map(st=>({label:st.label,...(state.stationsState?.[st.id]||{token:'---',name:'',status:'finished'})})).filter(x=>x.status==='inside'&&x.token!=='---');return `<div class="tv-column"><div class="tv-col-title">${cat.title}</div>${!items.length?'<div style="text-align:center;color:#64748b;padding:20px;font-size:.9rem;font-weight:600">No Active Tokens</div>':items.map(item=>`<div class="tv-token-box"><div class="tv-token-val">${escapeHtml(item.token)}</div></div>`).join('')}</div>`;}).join('');}
+  function renderReports(){const picker=document.getElementById('audit-date-picker');if(!picker)return;const date=picker.value,patients=(state.history&&state.history[date])||[];document.getElementById('stat-total').textContent=patients.length;document.getElementById('stat-inj').textContent=patients.filter(p=>p.procedures?.includes('Injection')).length;document.getElementById('stat-dress').textContent=patients.filter(p=>p.procedures?.includes('Dressing')).length;document.getElementById('stat-ecg').textContent=patients.filter(p=>p.procedures?.includes('ECG')).length;const tbody=document.getElementById('reports-table-body');if(!tbody)return;if(!patients.length){tbody.innerHTML=`<tr><td colspan="4" style="text-align:center;color:var(--text-sub);padding:20px">No records found for ${escapeHtml(date)}</td></tr>`;return;}tbody.innerHTML=patients.map(p=>`<tr><td>${escapeHtml(p.time)}</td><td style="font-weight:800;color:var(--accent)">${escapeHtml(p.token)}</td><td>${escapeHtml(p.name)}<br><small style="color:var(--text-sub)">${escapeHtml(p.file)}</small></td><td>${(p.procedures||[]).map(escapeHtml).join(', ')}</td></tr>`).join('');}
+  function triggerThermalPrint(patient){const dateStr=new Date().toLocaleDateString(),timeStr=new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit',second:'2-digit'}),w=window.open('','_blank','width=350,height=500');if(!w){alert('Popup blocked. Allow popups to print token slips.');return;}const safeName=escapeHtml(patient.name),safeFile=escapeHtml(patient.file),safeToken=escapeHtml(patient.token);const ticket=`<div class="ticket"><div class="title">SHIFA AL-KHOBAR MEDICAL CENTER</div><div style="font-size:8pt;direction:rtl">مجمع شفاء الخبر الطبي</div><hr><div style="font-size:9pt">Your Token Number is</div><div class="token">${safeToken}</div><div style="font-size:8pt">Please wait. You will be served soon.</div><hr><div class="info"><b>Name:</b> ${safeName}</div><div class="info"><b>File No:</b> ${safeFile}</div><hr><div style="font-size:8pt;display:flex;justify-content:space-between"><span>${dateStr}</span><span>${timeStr}</span></div></div>`;w.document.write(`<!DOCTYPE html><html><head><title>Token Slips</title><style>@page{size:80mm auto;margin:0}body{width:76mm;margin:0 auto;padding:4px;font-family:'Courier New',monospace;color:#000;background:#fff;text-align:center}.ticket{padding-bottom:6mm}.cut-line{border-top:1px dashed #000;margin:8mm 0;position:relative}.cut-line:after{content:"✂ --- Cut Here --- ✂";position:absolute;top:-8px;left:50%;transform:translateX(-50%);background:#fff;font-size:7pt;padding:0 4px}.title{font-size:10pt;font-weight:bold}.token{font-size:34pt;font-weight:bold;margin:4px 0}.info{font-size:9pt;text-align:left;margin-top:4px}hr{border:0;border-top:1px dashed #000;margin:6px}</style></head><body>${ticket}<div class="cut-line"></div>${ticket}<script>window.onload=function(){window.print();setTimeout(function(){window.close()},500)};<\/script></body></html>`);w.document.close();}
+</script>
+</body>
+</html>
